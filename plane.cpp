@@ -9,6 +9,7 @@
 #include <cmath>
 #include <fstream>
 #include <string>
+#include "rotozoom"
 using namespace std;
 void initialization (int row[],int column[]);
 void show(SDL_Surface* screen, int cloud_speed);
@@ -16,12 +17,25 @@ void event_handel (SDL_Surface* screen);
 struct base_struct
 {
 	char type;
+	bool select;
 	int x;
 	int y;
 	int w;
 	int h;
-	bool select;
+	int capacity;
+	int production_speed;
 }base[11];
+struct plane
+{
+	char type;
+	bool show;
+	int x;
+	int y;
+	int w;
+	int h;
+	int plane_speed;
+	int angle;
+}
 struct cloud_struct
 {
 	int x;
@@ -40,7 +54,7 @@ int main (int argc, char * args[])
 	SDL_Surface* foeplane =NULL;
 	SDL_Surface* boom =NULL;
 	SDL_Surface* planeshadow=NULL;
-	background=SDL_LoadBMP ("map1.bmp");
+	background=SDL_LoadBMP ("game_images/map1.bmp");
 	cloud[0].x=500;
 	cloud[1].x=40;
 	cloud[2].x=1000;
@@ -56,7 +70,7 @@ int main (int argc, char * args[])
 		show (screen,cloud_speed);
 		
 		SDL_Flip(screen);
-		SDL_Delay (2);
+		SDL_Delay (1);
 	}
 	return 0;
 }
@@ -141,15 +155,15 @@ void show(SDL_Surface* screen, int cloud_speed)
 	SDL_Surface* mybase_select=NULL;
 	SDL_Surface* foebase_select=NULL;
 	SDL_Surface* emptybase_select=NULL;
-	mybase= IMG_Load ("mybase.png");
-	foebase= IMG_Load ("foebase.png");
-	emptybase= IMG_Load ("emptybase.png");
-	mybase_select=IMG_Load ("mybase select.png");
-	foebase_select=IMG_Load ("foebase select.png");
-	emptybase_select=IMG_Load ("emptybase select.png");
-	baseshadow=IMG_Load ("baseshadow.png");
-	Cloud=IMG_Load ("cloud.png");
-	cloudshadow=IMG_Load("cloudshadow.png");
+	mybase= IMG_Load ("game_images/mybase.png");
+	foebase= IMG_Load ("game_images/foebase.png");
+	emptybase= IMG_Load ("game_images/emptybase.png");
+	mybase_select=IMG_Load ("game_images/mybase select.png");
+	foebase_select=IMG_Load ("game_images/foebase select.png");
+	emptybase_select=IMG_Load ("game_images/emptybase select.png");
+	baseshadow=IMG_Load ("game_images/baseshadow.png");
+	Cloud=IMG_Load ("game_images/cloud.png");
+	cloudshadow=IMG_Load("game_images/cloudshadow.png");
 	SDL_Rect mybase_cords;
 	SDL_Rect foebase_cords;
 	SDL_Rect emptybase_cords;
