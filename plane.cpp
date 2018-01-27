@@ -244,14 +244,8 @@ void event_handel (SDL_Surface* screen)
                             {
                                 if (base[i].type=='m')
                                 {
-                                	if (base[i].select)
-                                	{
-                                		base[i].select=false;
-                                	}
-                                	else
-                                	{
-                                		base[i].select=true;
-                                	}	
+                                	if (base[i].select) base[i].select=false;
+                                	else base[i].select=true;
                             	}
                             }
                         }
