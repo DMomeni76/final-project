@@ -9,11 +9,11 @@
 #include <cmath>
 #include <fstream>
 #include <string>
-#include "rotozoom"
 using namespace std;
-void initialization (int row[],int column[]);
-void show(SDL_Surface* screen, int cloud_speed);
-void event_handel (SDL_Surface* screen);
+void initialization (int row[],int column[], int &basecount);
+void show(SDL_Surface* screen, int cloud_speed, int basecount);
+void event_handel (SDL_Surface* screen, int basecount);
+void base_handel (double timer, bool &time_flag, int basecount);
 struct base_struct
 {
 	char type;
@@ -22,7 +22,7 @@ struct base_struct
 	int y;
 	int w;
 	int h;
-	int capacity;
+	int plane_count;
 	int production_speed;
 }base[11];
 struct plane
@@ -35,7 +35,7 @@ struct plane
 	int h;
 	int plane_speed;
 	int angle;
-}
+};
 struct cloud_struct
 {
 	int x;
@@ -61,22 +61,31 @@ int main (int argc, char * args[])
 	cloud[0].y=50;
 	cloud[1].y=220;
 	cloud[2].y=450;
+	int basecount =0;
+	double timer=time(0);
+	cout<<"kir";
+	bool time_flag=true;
 	int cloud_speed=1;
-	initialization (row,column);
+	initialization (row,column, basecount);
 	while (true)
 	{
+		base_handel (timer, time_flag, basecount);
 		SDL_BlitSurface(background, NULL, screen, NULL );
-		event_handel (screen);
-		show (screen,cloud_speed);
+		event_handel (screen, basecount);
+		show (screen,cloud_speed, basecount);
+		if (!time_flag)
+		{
+			timer=time(0);
+			time_flag=true;
+		}
 		
 		SDL_Flip(screen);
 		SDL_Delay (1);
 	}
 	return 0;
 }
-void initialization (int row[],int column[])
+void initialization (int row[],int column[], int &basecount)
 {
-	int basecount;
 	basecount=rand()%4 + 1;
 	int emptybase;
 	if (basecount<=2)
@@ -118,6 +127,7 @@ void initialization (int row[],int column[])
 			base[counter].w=73;
 			base[counter].h=82;
 			base[counter].select=false;
+			base[counter].plane_count=10;
 		}
 		else
 		{
@@ -129,6 +139,7 @@ void initialization (int row[],int column[])
 				base[counter].w=85;
                 base[counter].h=89;
                 base[counter].select=false;
+                base[counter].plane_count=0;
 			}
 			else
 			{
@@ -138,13 +149,14 @@ void initialization (int row[],int column[])
 				base[counter].w=76;
                 base[counter].h=85;
                 base[counter].select=false;
+                base[counter].plane_count=0;
 			}
 		}
 		counter++;
 	}
-
+	basecount=2*basecount+emptybase;
 }
-void show(SDL_Surface* screen, int cloud_speed)
+void show(SDL_Surface* screen, int cloud_speed, int basecount)
 {
 	SDL_Surface* mybase =NULL;
 	SDL_Surface* emptybase =NULL;
@@ -170,7 +182,7 @@ void show(SDL_Surface* screen, int cloud_speed)
 	SDL_Rect baseshadow_cords;
 	SDL_Rect cloud_cords;
 	SDL_Rect cloudshadow_cords;
-	for (int i=0;i<11;i++)
+	for (int i=0;i<basecount;i++)
 	{
 		if (base[i].type=='m')
 		{
@@ -236,7 +248,7 @@ void show(SDL_Surface* screen, int cloud_speed)
 		SDL_BlitSurface (cloudshadow, NULL, screen, &cloudshadow_cords);
 	}
 }
-void event_handel (SDL_Surface* screen)
+void event_handel (SDL_Surface* screen, int basecount)
 {
 	SDL_Event event;
 	if(SDL_PollEvent(&event))
@@ -250,7 +262,7 @@ void event_handel (SDL_Surface* screen)
 			{
 				if (event.button.button==SDL_BUTTON_LEFT)
 				{
-                    for (int i=0;i<11;i++)
+                    for (int i=0;i<basecount;i++)
                     {
                         if (event.button.x>base[i].x && event.button.x<base[i].x+base[i].w)
                         {
@@ -269,7 +281,7 @@ void event_handel (SDL_Surface* screen)
 		}
 	if (event.type==SDL_MOUSEMOTION)
 	{
-        for (int i=0;i<11;i++)
+        for (int i=0;i<basecount;i++)
        {
             if (event.button.x>base[i].x && event.button.x<base[i].x+base[i].w)
             {
@@ -290,5 +302,21 @@ void event_handel (SDL_Surface* screen)
             	base[i].select=false;
             }
         }
+	}
+}
+void base_handel (double timer, bool &time_flag, int basecount)
+{
+	bool current_time=time(0); 
+	if (current_time - timer>=2000)
+	{
+		for (int i=0;i<basecount;i++)
+		{		
+			if (base[i].type!='e' && base[i].plane_count<=20)
+			{	
+				base[i].plane_count+=base[i].production_speed;
+				cout<<i<<" :	"<<base[i].plane_count<<endl;
+			}
+		}
+		time_flag=false;
 	}
 }
