@@ -10,11 +10,10 @@
 #include <fstream>
 #include <string>
 using namespace std;
-
 void initialization (int row[],int column[], int &basecount);
-void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2);
+void show(SDL_Surface* screen, int cloud_speed, int basecount);
 void event_handel (SDL_Surface* screen, int basecount);
-void base_handel (int &timer, int basecount);
+void base_handel (double &timer, int basecount);
 void optimize (SDL_Surface* screen);
 struct base_struct
 {
@@ -52,9 +51,11 @@ int main (int argc, char * args[])
 	SDL_Surface* screen= NULL;
 	screen = SDL_SetVideoMode (1280, 720, 32, SDL_SWSURFACE);
 	SDL_WM_SetCaption ("Plane Wars (D&H)", NULL);
+	SDL_Surface* background = NULL;
 	SDL_Surface* foeplane =NULL;
 	SDL_Surface* boom =NULL;
 	SDL_Surface* planeshadow=NULL;
+	background=SDL_LoadBMP ("game_images/map1.bmp");
 	cloud[0].x=500;
 	cloud[1].x=40;
 	cloud[2].x=1000;
@@ -62,14 +63,14 @@ int main (int argc, char * args[])
 	cloud[1].y=220;
 	cloud[2].y=450;
 	int basecount =0;
-	int timer=time(0);
-	int timer2=time(0);
+	double timer=time(0);
 	int cloud_speed=1;
 	initialization (row,column, basecount);
 	while (true)
 	{
+		SDL_BlitSurface(background, NULL, screen, NULL );
 		event_handel (screen, basecount);
-		show (screen,cloud_speed, basecount, timer2);
+		//show (screen,cloud_speed, basecount);
 		base_handel (timer, basecount);
 		SDL_Flip(screen);
 		SDL_Delay (2);
@@ -150,9 +151,8 @@ void initialization (int row[],int column[], int &basecount)
 	}
 	basecount=2*basecount+emptybase;
 }
-void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
+void show(SDL_Surface* screen, int cloud_speed, int basecount)
 {
-	SDL_Surface* background = NULL;
 	SDL_Surface* mybase =NULL;
 	SDL_Surface* emptybase =NULL;
 	SDL_Surface* foebase =NULL;
@@ -163,7 +163,6 @@ void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
 	SDL_Surface* foebase_select=NULL;
 	SDL_Surface* emptybase_select=NULL;
 	SDL_Surface* mybase_plane_count[20];
-	background=SDL_LoadBMP ("game_images/map1.bmp");
 	mybase= IMG_Load ("game_images/mybase.png");
 	foebase= IMG_Load ("game_images/foebase.png");
 	emptybase= IMG_Load ("game_images/emptybase.png");
@@ -200,7 +199,6 @@ void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
 	SDL_Rect baseshadow_cords;
 	SDL_Rect cloud_cords;
 	SDL_Rect cloudshadow_cords;
-	SDL_BlitSurface(background, NULL, screen, NULL );
 
 	for (int i=0;i<basecount;i++)
 	{
@@ -270,22 +268,7 @@ void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
 		cloudshadow_cords.y=cloud[i].y+40;
 		SDL_BlitSurface (Cloud, NULL, screen, &cloud_cords);
 		SDL_BlitSurface (cloudshadow, NULL, screen, &cloudshadow_cords);
-	} 	
-	//SDL_FreeSurface (background);
-	/*SDL_FreeSurface (mybase); 
- 	SDL_FreeSurface (foebase); 
- 	SDL_FreeSurface (baseshadow); 
-	SDL_FreeSurface (emptybase); 
-  	SDL_FreeSurface (Cloud); 
-  	SDL_FreeSurface (cloudshadow); 
-  	SDL_FreeSurface (mybase_select); 
-  	SDL_FreeSurface (foebase_select); 
-  	SDL_FreeSurface (emptybase_select); 
- 	for (int i=0;i<20;i++) 
-  	{ 
-    	SDL_FreeSurface (mybase_plane_count[i]); 
-  	}*/
-
+	}
 }
 void event_handel (SDL_Surface* screen, int basecount)
 {
@@ -343,9 +326,9 @@ void event_handel (SDL_Surface* screen, int basecount)
         }
 	}
 }
-void base_handel (int &timer, int basecount)
+void base_handel (double &timer, int basecount)
 {
-	int current_time=time(0);
+	double current_time=time(0);
 	if (current_time - timer>=2)
 	{
 		for (int i=0;i<basecount;i++)
@@ -360,4 +343,6 @@ void base_handel (int &timer, int basecount)
 }
 void optimize (SDL_Surface* screen)
 {
+
+
 }
