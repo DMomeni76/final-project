@@ -15,7 +15,6 @@ void initialization (int row[],int column[], int &basecount);
 void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2);
 void event_handel (SDL_Surface* screen, int basecount);
 void base_handel (int &timer, int basecount);
-void optimize (SDL_Surface* screen);
 struct base_struct
 {
 	char type;
@@ -43,6 +42,18 @@ struct cloud_struct
 	int x;
 	int y;
 }cloud[3];
+//images
+	SDL_Surface* background = NULL;
+	SDL_Surface* mybase =NULL;
+	SDL_Surface* emptybase =NULL;
+	SDL_Surface* foebase =NULL;
+	SDL_Surface* baseshadow =NULL;
+	SDL_Surface* Cloud=NULL;
+	SDL_Surface* cloudshadow =NULL;
+	SDL_Surface* mybase_select=NULL;
+	SDL_Surface* foebase_select=NULL;
+	SDL_Surface* emptybase_select=NULL;
+	SDL_Surface* mybase_plane_count[20];
 int main (int argc, char * args[])
 {
 	srand(time(0));
@@ -79,14 +90,14 @@ int main (int argc, char * args[])
 void initialization (int row[],int column[], int &basecount)
 {
 	basecount=rand()%4 + 1;
-	int emptybase;
+	int emptybase_count;
 	if (basecount<=2)
 	{
-		emptybase=2;
+		emptybase_count=2;
 	}
 	else
 	{
-		emptybase=3;
+		emptybase_count=3;
 	}
 	int counter=0;
 	int ibase;
@@ -99,7 +110,7 @@ void initialization (int row[],int column[], int &basecount)
 			basechack[i][j]=0;
 		}
 	}
-	while(counter<2*basecount+emptybase)
+	while(counter<2*basecount+emptybase_count)
 	{
 		while(true)
 		{
@@ -111,7 +122,7 @@ void initialization (int row[],int column[], int &basecount)
 				break;
 			}
 		}
-		if (counter<emptybase)
+		if (counter<emptybase_count)
 		{
 			base[counter].type='e';
 			base[counter].x=column[jbase];
@@ -123,7 +134,7 @@ void initialization (int row[],int column[], int &basecount)
 		}
 		else
 		{
-			if (counter<basecount+emptybase)
+			if (counter<basecount+emptybase_count)
 			{
 				base[counter].type='m';
 				base[counter].x=column[jbase];
@@ -148,24 +159,11 @@ void initialization (int row[],int column[], int &basecount)
 		}
 		counter++;
 	}
-	basecount=2*basecount+emptybase;
-}
-void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
-{
-	SDL_Surface* background = NULL;
-	SDL_Surface* mybase =NULL;
-	SDL_Surface* emptybase =NULL;
-	SDL_Surface* foebase =NULL;
-	SDL_Surface* baseshadow =NULL;
-	SDL_Surface* Cloud=NULL;
-	SDL_Surface* cloudshadow =NULL;
-	SDL_Surface* mybase_select=NULL;
-	SDL_Surface* foebase_select=NULL;
-	SDL_Surface* emptybase_select=NULL;
-	SDL_Surface* mybase_plane_count[20];
+	//image load
+	basecount=2*basecount+emptybase_count;
 	background=SDL_LoadBMP ("game_images/map1.bmp");
-	mybase= IMG_Load ("game_images/mybase.png");
 	foebase= IMG_Load ("game_images/foebase.png");
+	mybase= IMG_Load ("game_images/mybase.png");
 	emptybase= IMG_Load ("game_images/emptybase.png");
 	mybase_select=IMG_Load ("game_images/mybase select.png");
 	foebase_select=IMG_Load ("game_images/foebase select.png");
@@ -193,6 +191,11 @@ void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
 	mybase_plane_count[17]= IMG_Load ("game_images/numbers/18.png");
 	mybase_plane_count[18]= IMG_Load ("game_images/numbers/19.png");
 	mybase_plane_count[19]= IMG_Load ("game_images/numbers/20.png");
+}
+void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
+{
+	
+	
 	SDL_Rect mybase_plane_count_cords;
 	SDL_Rect mybase_cords;
 	SDL_Rect foebase_cords;
@@ -271,20 +274,6 @@ void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
 		SDL_BlitSurface (Cloud, NULL, screen, &cloud_cords);
 		SDL_BlitSurface (cloudshadow, NULL, screen, &cloudshadow_cords);
 	} 	
-	//SDL_FreeSurface (background);
-	/*SDL_FreeSurface (mybase); 
- 	SDL_FreeSurface (foebase); 
- 	SDL_FreeSurface (baseshadow); 
-	SDL_FreeSurface (emptybase); 
-  	SDL_FreeSurface (Cloud); 
-  	SDL_FreeSurface (cloudshadow); 
-  	SDL_FreeSurface (mybase_select); 
-  	SDL_FreeSurface (foebase_select); 
-  	SDL_FreeSurface (emptybase_select); 
- 	for (int i=0;i<20;i++) 
-  	{ 
-    	SDL_FreeSurface (mybase_plane_count[i]); 
-  	}*/
 
 }
 void event_handel (SDL_Surface* screen, int basecount)
@@ -293,7 +282,21 @@ void event_handel (SDL_Surface* screen, int basecount)
 	if(SDL_PollEvent(&event))
 		{
 			if (event.type==SDL_QUIT)
-			{
+			{	
+				SDL_FreeSurface (background);
+				SDL_FreeSurface (mybase); 
+ 				SDL_FreeSurface (foebase); 
+ 				SDL_FreeSurface (baseshadow); 
+				SDL_FreeSurface (emptybase); 
+  				SDL_FreeSurface (Cloud); 
+  				SDL_FreeSurface (cloudshadow); 
+  				SDL_FreeSurface (mybase_select); 
+  				SDL_FreeSurface (foebase_select); 
+  				SDL_FreeSurface (emptybase_select); 
+ 				for (int i=0;i<20;i++) 
+  				{ 
+    				SDL_FreeSurface (mybase_plane_count[i]); 
+  				}
 				SDL_FreeSurface(screen);
 				SDL_Quit();
 			}
@@ -357,7 +360,4 @@ void base_handel (int &timer, int basecount)
 		}
 		timer=time(0);
 	}
-}
-void optimize (SDL_Surface* screen)
-{
 }
