@@ -13,7 +13,7 @@ using namespace std;
 
 void initialization (int row[],int column[], int &basecount);
 void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2);
-void event_handel (SDL_Surface* screen, int basecount);
+void event_handel (SDL_Surface* screen, int basecount, int &target_base_number);
 void base_handel (int &timer, int basecount);
 struct base_struct
 {
@@ -25,6 +25,10 @@ struct base_struct
 	int h;
 	int plane_count;
 	int production_speed;
+	int plane_count_temp;
+	int plane_xspeed;
+	int plane_yspeed;
+	bool target;
 }base[11];
 struct plane
 {
@@ -34,7 +38,6 @@ struct plane
 	int y;
 	int w;
 	int h;
-	int plane_speed;
 	int angle;
 };
 struct cloud_struct
@@ -73,13 +76,14 @@ int main (int argc, char * args[])
 	cloud[1].y=220;
 	cloud[2].y=450;
 	int basecount =0;
+	int target_base_number;
 	int timer=time(0);
 	int timer2=time(0);
 	int cloud_speed=1;
 	initialization (row,column, basecount);
 	while (true)
 	{
-		event_handel (screen, basecount);
+		event_handel (screen, basecount, target_base_number);
 		show (screen,cloud_speed, basecount, timer2);
 		base_handel (timer, basecount);
 		SDL_Flip(screen);
@@ -276,74 +280,107 @@ void show(SDL_Surface* screen, int cloud_speed, int basecount, int &timer2)
 	} 	
 
 }
-void event_handel (SDL_Surface* screen, int basecount)
-{
+void event_handel (SDL_Surface* screen, int basecount, int &target_base_number)
+{	
+	int delta_x;
+	int delta_y;
 	SDL_Event event;
 	if(SDL_PollEvent(&event))
+	{
+		if (event.type==SDL_QUIT)
+		{	
+			SDL_FreeSurface (background);
+			SDL_FreeSurface (mybase); 
+ 			SDL_FreeSurface (foebase); 
+ 			SDL_FreeSurface (baseshadow); 
+			SDL_FreeSurface (emptybase); 
+  			SDL_FreeSurface (Cloud); 
+  			SDL_FreeSurface (cloudshadow); 
+ 			SDL_FreeSurface (mybase_select); 
+  			SDL_FreeSurface (foebase_select); 
+ 			SDL_FreeSurface (emptybase_select); 
+			for (int i=0;i<20;i++) 
+  			{ 
+   				SDL_FreeSurface (mybase_plane_count[i]); 
+  			}
+			SDL_FreeSurface(screen);
+			SDL_Quit();
+		}
+		if (event.type==SDL_MOUSEBUTTONDOWN)
 		{
-			if (event.type==SDL_QUIT)
-			{	
-				SDL_FreeSurface (background);
-				SDL_FreeSurface (mybase); 
- 				SDL_FreeSurface (foebase); 
- 				SDL_FreeSurface (baseshadow); 
-				SDL_FreeSurface (emptybase); 
-  				SDL_FreeSurface (Cloud); 
-  				SDL_FreeSurface (cloudshadow); 
-  				SDL_FreeSurface (mybase_select); 
-  				SDL_FreeSurface (foebase_select); 
-  				SDL_FreeSurface (emptybase_select); 
- 				for (int i=0;i<20;i++) 
-  				{ 
-    				SDL_FreeSurface (mybase_plane_count[i]); 
-  				}
-				SDL_FreeSurface(screen);
-				SDL_Quit();
-			}
-			if (event.type==SDL_MOUSEBUTTONDOWN)
+			if (event.button.button==SDL_BUTTON_LEFT)
 			{
-				if (event.button.button==SDL_BUTTON_LEFT)
-				{
-                    for (int i=0;i<basecount;i++)
+                for (int i=0;i<basecount;i++)
+                {
+                    if (event.button.x>base[i].x && event.button.x<base[i].x+base[i].w)
                     {
-                        if (event.button.x>base[i].x && event.button.x<base[i].x+base[i].w)
+                        if (event.button.y>base[i].y && event.button.y<base[i].y+base[i].h)
                         {
-                            if (event.button.y>base[i].y && event.button.y<base[i].y+base[i].h)
+                            if (base[i].type=='m')
                             {
-                                if (base[i].type=='m')
-                                {
-                                	if (base[i].select) base[i].select=false;
-                                	else base[i].select=true;
-                            	}
+                            	if (base[i].select) base[i].select=false;
+                               	else base[i].select=true;
+                           	}
+                        }
+                    }
+                }
+			}
+			if (event.button.button==SDL_BUTTON_RIGHT)
+			{
+				for (int i=0;i<basecount;i++)
+                {
+                    if (event.button.x>base[i].x && event.button.x<base[i].x+base[i].w)
+                    {
+                        if (event.button.y>base[i].y && event.button.y<base[i].y+base[i].h)
+                        {
+                           	base[i].target=false;
+                           	target_base_number=i;
+
+                          	for (int j=0;j<basecount;j++)
+                            {
+                             	if (base[j].type=='m' && base[j].select==true && i!=j)
+                             	{
+                             		base[j].plane_count_temp=base[j].plane_count;
+                             		delta_x=(base[i].x+(base[i].w/2)-base[j].x+(base[j].w/2));
+                             		delta_y=(base[i].y+(base[i].h/2))-(base[j].y+(base[j].h/2));
+                           			base[j].plane_yspeed=delta_y/delta_x;	
+                           			base[j].select=false;
+                             	}
+                             	if (base[j].type=='m' && base[j].select==true && i==j)
+                             	{
+                             		base[j].plane_count_temp=0;
+                             		base[j].select=false;
+                             	}
                             }
                         }
                     }
-				}
+                }
 			}
 		}
-	if (event.type==SDL_MOUSEMOTION)
-	{
-        for (int i=0;i<basecount;i++)
-       {
-            if (event.button.x>base[i].x && event.button.x<base[i].x+base[i].w)
-            {
-                if (event.button.y>base[i].y && event.button.y<base[i].y+base[i].h)
-                {
-                	if (base[i].type!='m')
+		if (event.type==SDL_MOUSEMOTION)
+		{
+    	    for (int i=0;i<basecount;i++)
+   		    {
+   	      		if (event.button.x>base[i].x && event.button.x<base[i].x+base[i].w)
+            	{
+               		if (event.button.y>base[i].y && event.button.y<base[i].y+base[i].h)
                 	{
-                    	base[i].select=true;
-                    }
-                }
-                else if (base[i].type!='m')
+                		if (base[i].type!='m')
+                		{
+                    		base[i].select=true;
+                    	}
+                	}
+                	else if (base[i].type!='m')
+            		{
+            			base[i].select=false;
+            		}
+            	}
+            	else if (base[i].type!='m')
             	{
             		base[i].select=false;
             	}
-            }
-            else if (base[i].type!='m')
-            {
-            	base[i].select=false;
-            }
-        }
+        	}
+		}
 	}
 }
 void base_handel (int &timer, int basecount)
@@ -360,4 +397,8 @@ void base_handel (int &timer, int basecount)
 		}
 		timer=time(0);
 	}
+}
+void myplane_handel ()
+{
+
 }
