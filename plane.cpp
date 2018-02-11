@@ -2,6 +2,7 @@
 #include "SDL/SDL.h"
 #include "SDL/SDL_gfxPrimitives.h"
 #include "SDL/SDL_image.h"
+#include <SDL/SDL_mixer.h>
 #include "SDL/SDL_ttf.h"
 #include <cstdlib>
 #include <ctime>
@@ -16,6 +17,8 @@ void show(SDL_Surface* screen,int &timer_show_plane ,int cloud_speed, int baseco
 void event_handel (SDL_Surface* screen, int basecount, int &target_base_number);
 void base_handel (int &timer, int basecount);
 void myplane_handel (SDL_Surface* screen,int selected_bases_count, int basecount);
+void menu( SDL_Surface* screen);
+bool quit(SDL_Surface* screen);
 struct base_struct
 {
 	char type;
@@ -71,7 +74,10 @@ int show_count=3;
 	SDL_Surface* planeshadow=NULL;
 	SDL_Surface* emptybase_plane_count[10];
 	SDL_Surface* mybase_plane_count[20];
-
+	SDL_Surface* menupic[3];
+	SDL_Surface* quit_no=NULL;
+	SDL_Surface* quit_yes= NULL;
+	Mix_Chunk* selection_sound=NULL;
 int main (int argc, char * args[])
 {
 	srand(time(0));
@@ -80,21 +86,17 @@ int main (int argc, char * args[])
 	int row[3]={100,340,580};
 	SDL_Surface* screen= NULL;
 	screen = SDL_SetVideoMode (1280, 720, 32, SDL_SWSURFACE);
+	Mix_OpenAudio( 22050, MIX_DEFAULT_FORMAT, 2, 4096 );
 	SDL_WM_SetCaption ("Plane Wars (D&H)", NULL);
-	cloud[0].x=500;
-	cloud[1].x=40;
-	cloud[2].x=1000;
-	cloud[0].y=50;
-	cloud[1].y=220;
-	cloud[2].y=450;
 	int basecount =0;
 	int target_base_number;
 	int timer=time(0);
 	int timer_show_plane=time(0);
 	int cloud_speed=1;
 	initialization (row,column, basecount);
-
-	while (true)
+	bool game_run=true;
+	menu (screen);
+	while (game_run)
 	{
 		event_handel (screen, basecount, target_base_number);
 		show (screen,timer_show_plane,cloud_speed, basecount, target_base_number);
@@ -193,6 +195,11 @@ void initialization (int row[],int column[], int &basecount)
 		Myplane=IMG_Load("game_images/myplane.png");
 		Foeplane=IMG_Load("game_images/foeplane.png");
 		planeshadow=IMG_Load("game_images/planeshadow.png");
+		menupic[0]=IMG_Load ("game_images/menu1.png");
+		menupic[1]=IMG_Load ("game_images/menu2.png");
+		menupic[2]=IMG_Load ("game_images/menu3.png");
+		quit_no=IMG_Load ("game_images/quitno.png");
+		quit_yes=IMG_Load ("game_images/quityes.png");
 		mybase_plane_count[0]= IMG_Load ("game_images/numbers/1.png");
 		mybase_plane_count[1]= IMG_Load ("game_images/numbers/2.png");
 		mybase_plane_count[2]= IMG_Load ("game_images/numbers/3.png");
@@ -223,6 +230,13 @@ void initialization (int row[],int column[], int &basecount)
 		emptybase_plane_count[7]=IMG_Load ("game_images/emptybasenumbers/8.png");
 		emptybase_plane_count[8]=IMG_Load ("game_images/emptybasenumbers/9.png");
 		emptybase_plane_count[9]=IMG_Load ("game_images/emptybasenumbers/10.png");
+		selection_sound=Mix_LoadWAV ("game_sounds/selection_sound.wav");
+		cloud[0].x=500;
+		cloud[1].x=40;
+		cloud[2].x=1000;
+		cloud[0].y=50;
+		cloud[1].y=220;
+		cloud[2].y=450;
 }
 void show(SDL_Surface* screen,int &timer_show_plane ,int cloud_speed, int basecount, int &target_base_number)
 {
@@ -358,22 +372,7 @@ void event_handel (SDL_Surface* screen, int basecount, int &target_base_number)
 	{
 		if (event.type==SDL_QUIT)
 		{	
-			SDL_FreeSurface (background);
-			SDL_FreeSurface (mybase); 
- 			SDL_FreeSurface (foebase); 
- 			SDL_FreeSurface (baseshadow); 
-			SDL_FreeSurface (emptybase); 
-  			SDL_FreeSurface (Cloud); 
-  			SDL_FreeSurface (cloudshadow); 
- 			SDL_FreeSurface (mybase_select); 
-  			SDL_FreeSurface (foebase_select); 
- 			SDL_FreeSurface (emptybase_select); 
-			for (int i=0;i<20;i++) 
-  			{ 
-   				SDL_FreeSurface (mybase_plane_count[i]); 
-  			}
-			SDL_FreeSurface(screen);
-			SDL_Quit();
+			quit(screen);
 		}
 		if (event.type==SDL_MOUSEBUTTONDOWN)
 		{
@@ -388,7 +387,11 @@ void event_handel (SDL_Surface* screen, int basecount, int &target_base_number)
                             if (base[i].type=='m')
                             {
                             	if (base[i].select) base[i].select=false;
-                               	else base[i].select=true;
+                               	else
+                               	{ 
+                               		Mix_PlayChannel (-1,selection_sound,0);
+                               		base[i].select=true;
+                               	}
                            	}
                         }
                     }
@@ -580,5 +583,122 @@ void myplane_handel (SDL_Surface* screen,int selected_bases_count, int basecount
 		}
 		
 		counter++;
+	}
+}
+void menu( SDL_Surface* screen)
+{	
+	Mix_Music* menu_music=NULL;
+	menu_music=Mix_LoadMUS ("game_sounds/menu_music.mp3");
+	Mix_PlayMusic (menu_music,-1);
+	bool menu_run=true;
+	SDL_BlitSurface (menupic[0],NULL, screen, NULL);
+	while (menu_run)
+	{
+		SDL_Event event;
+		if(SDL_PollEvent(&event))
+		{
+			if (event.type==SDL_QUIT)
+			{
+				quit (screen);
+				menu_run=false;
+			}
+			if (event.type==SDL_MOUSEMOTION)
+			{
+				if (event.button.x>250 && event.button.x<1000 && event.button.y>150 && event.button.y<335)
+				{
+
+                    SDL_BlitSurface (menupic[0],NULL, screen, NULL);
+				}
+				if (event.button.x>250 && event.button.x<1000 && event.button.y>335 && event.button.y<385)
+				{
+                    SDL_BlitSurface (menupic[1],NULL, screen, NULL);
+				}
+				if (event.button.x>250 && event.button.x<1000 && event.button.y>385 && event.button.y<550)
+				{
+                    SDL_BlitSurface (menupic[2],NULL, screen, NULL);
+				}
+			}
+			if (event.type==SDL_MOUSEBUTTONDOWN)
+            {
+                if (event.button.button==SDL_BUTTON_LEFT)
+                {
+                	if (event.button.x>250 && event.button.x<1000 && event.button.y>250 && event.button.y<335)
+					{
+						Mix_PlayChannel (-1,selection_sound,0);
+                	    menu_run=false;
+					}
+					if (event.button.x>250 && event.button.x<1000 && event.button.y>335 && event.button.y<385)
+					{
+						Mix_PlayChannel (-1,selection_sound,0);
+					}
+					if (event.button.x>250 && event.button.x<1000 && event.button.y>385 && event.button.y<450)
+					{
+						Mix_PlayChannel (-1,selection_sound,0);
+						//quit(screen);
+						if (quit(screen)==false)  SDL_BlitSurface (menupic[2],NULL, screen, NULL);
+					}
+                }
+            }    
+		}
+	SDL_Flip (screen);
+	SDL_Delay (1);
+	}
+	Mix_FreeMusic (menu_music);
+}
+bool quit(SDL_Surface* screen)
+{
+	SDL_BlitSurface (quit_no,NULL, screen, NULL);
+	while (true)
+	{
+		SDL_Event event;
+		if(SDL_PollEvent(&event))
+		{
+			if (event.type==SDL_MOUSEMOTION)
+			{
+				if (event.button.x>250 && event.button.x<1000 && event.button.y>210 && event.button.y<408)
+				{
+
+                    SDL_BlitSurface (quit_no,NULL, screen, NULL);
+				}
+				if (event.button.x>250 && event.button.x<1000 && event.button.y>408 && event.button.y<610)
+				{
+                    SDL_BlitSurface (quit_yes,NULL, screen, NULL);
+				}
+			}
+			if (event.type==SDL_MOUSEBUTTONDOWN)
+            {
+                if (event.button.button==SDL_BUTTON_LEFT)
+                {
+                	if (event.button.x>250 && event.button.x<1000 && event.button.y>340 && event.button.y<408)
+					{	
+						Mix_PlayChannel (-1,selection_sound,0);
+						return false;
+					}
+					if (event.button.x>250 && event.button.x<1000 && event.button.y>408 && event.button.y<500)
+					{
+						Mix_PlayChannel (-1,selection_sound,0);
+                    	SDL_FreeSurface (background);
+						SDL_FreeSurface (mybase); 
+ 						SDL_FreeSurface (foebase); 
+ 						SDL_FreeSurface (baseshadow); 
+						SDL_FreeSurface (emptybase); 
+  						SDL_FreeSurface (Cloud); 
+  						SDL_FreeSurface (cloudshadow); 
+ 						SDL_FreeSurface (mybase_select); 
+  						SDL_FreeSurface (foebase_select); 
+ 						SDL_FreeSurface (emptybase_select); 
+						for (int i=0;i<20;i++) 
+  						{ 
+   							SDL_FreeSurface (mybase_plane_count[i]); 
+  						}
+						SDL_FreeSurface(screen);
+						Mix_CloseAudio();
+						SDL_Quit();
+					}
+                }
+            }
+		}
+	SDL_Flip (screen);
+	SDL_Delay (1);
 	}
 }
